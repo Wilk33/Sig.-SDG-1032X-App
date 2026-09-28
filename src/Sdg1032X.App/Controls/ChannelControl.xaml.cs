@@ -223,7 +223,30 @@ public partial class ChannelControl : UserControl
 		}
 		catch(Exception exception)
 		{
+			RestoreCustomLoadSelection();
 			showStatus(exception.Message,true);
+		}
+	}
+
+	private void RestoreCustomLoadSelection()
+	{
+		for(int index=2;index<LoadSelector.Items.Count;index++)
+		{
+			if(LoadSelector.Items[index] is not ComboBoxItem item ||
+				item.Tag?.ToString() != "Custom")
+			{
+				continue;
+			}
+			updating=true;
+			try
+			{
+				LoadSelector.SelectedIndex=index;
+			}
+			finally
+			{
+				updating=false;
+			}
+			return;
 		}
 	}
 
