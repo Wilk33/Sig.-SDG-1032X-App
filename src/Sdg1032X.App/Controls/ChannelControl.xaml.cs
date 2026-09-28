@@ -20,6 +20,8 @@ public partial class ChannelControl : UserControl
 	private int channel;
 	private bool outputEnabled;
 	private bool updating;
+	private OutputLoad confirmedLoad=OutputLoad.HighImpedance;
+	private double? confirmedLoadOhms;
 
 	public ChannelControl()
 	{
@@ -69,23 +71,9 @@ public partial class ChannelControl : UserControl
 			NoiseDeviationEditor.Value=snapshot.NoiseStandardDeviation;
 			NoiseMeanEditor.Value=snapshot.NoiseMean;
 			DcLevelEditor.Value=snapshot.OffsetVolts;
-			while(LoadSelector.Items.Count > 2)
-			{
-				LoadSelector.Items.RemoveAt(2);
-			}
-			if(snapshot.Load == OutputLoad.Custom)
-			{
-				LoadSelector.Items.Add(new ComboBoxItem
-				{
-					Content=$"{snapshot.LoadOhms:G} Ω (odczyt)",
-					Tag="Custom"
-				});
-				LoadSelector.SelectedIndex=2;
-			}
-			else
-			{
-				LoadSelector.SelectedIndex=snapshot.Load == OutputLoad.HighImpedance ? 0 : 1;
-			}
+			confirmedLoad=snapshot.Load;
+			confirmedLoadOhms=snapshot.LoadOhms;
+			ShowLoadSelection(confirmedLoad,confirmedLoadOhms);
 			PolaritySelector.SelectedIndex=snapshot.Polarity == OutputPolarity.Normal ? 0 : 1;
 			SetOutputState(snapshot.OutputEnabled);
 			UpdateFieldVisibility(snapshot.Waveform);
@@ -204,18 +192,9 @@ public partial class ChannelControl : UserControl
 			await session.SetLatestAsync(
 				$"C{channel}:LOAD",
 				SiglentProtocol.LoadCommand(channel,load));
-			updating=true;
-			try
-			{
-				while(LoadSelector.Items.Count > 2)
-				{
-					LoadSelector.Items.RemoveAt(2);
-				}
-			}
-			finally
-			{
-				updating=false;
-			}
+			confirmedLoad=load;
+			confirmedLoadOhms=load == OutputLoad.Ohms50 ? 50 : null;
+			ShowLoadSelection(confirmedLoad,confirmedLoadOhms);
 			showStatus($"CH{channel}: zmieniono obciążenie.",false);
 		}
 		catch(TaskCanceledException)
@@ -223,30 +202,38 @@ public partial class ChannelControl : UserControl
 		}
 		catch(Exception exception)
 		{
-			RestoreCustomLoadSelection();
+			ShowLoadSelection(confirmedLoad,confirmedLoadOhms);
 			showStatus(exception.Message,true);
 		}
 	}
 
-	private void RestoreCustomLoadSelection()
+	private void ShowLoadSelection(OutputLoad load,double? loadOhms)
 	{
-		for(int index=2;index<LoadSelector.Items.Count;index++)
+		bool wasUpdating=updating;
+		updating=true;
+		try
 		{
-			if(LoadSelector.Items[index] is not ComboBoxItem item ||
-				item.Tag?.ToString() != "Custom")
+			while(LoadSelector.Items.Count > 2)
 			{
-				continue;
+				LoadSelector.Items.RemoveAt(2);
 			}
-			updating=true;
-			try
+			if(load == OutputLoad.Custom)
 			{
-				LoadSelector.SelectedIndex=index;
+				LoadSelector.Items.Add(new ComboBoxItem
+				{
+					Content=$"{loadOhms:G} Ω (odczyt)",
+					Tag="Custom"
+				});
+				LoadSelector.SelectedIndex=2;
 			}
-			finally
+			else
 			{
-				updating=false;
+				LoadSelector.SelectedIndex=load == OutputLoad.HighImpedance ? 0 : 1;
 			}
-			return;
+		}
+		finally
+		{
+			updating=wasUpdating;
 		}
 	}
 
