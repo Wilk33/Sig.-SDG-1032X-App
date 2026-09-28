@@ -1,0 +1,20 @@
+name: build
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+
+jobs:
+  windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+      - name: Tests
+        run: dotnet run --project tests/Sdg1032X.Tests/Sdg1032X.Tests.csproj -c Release
+      - name: Build
+        run: dotnet build SDG1032X.slnx -c Release --no-restore

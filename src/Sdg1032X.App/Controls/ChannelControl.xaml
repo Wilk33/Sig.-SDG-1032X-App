@@ -1,0 +1,174 @@
+<UserControl
+	x:Class="Sdg1032X.App.Controls.ChannelControl"
+	xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+	xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+	xmlns:controls="clr-namespace:Sdg1032X.App.Controls"
+	Background="#616161">
+	<Grid Margin="10,7">
+		<Grid.RowDefinitions>
+			<RowDefinition Height="Auto" />
+			<RowDefinition Height="Auto" />
+			<RowDefinition Height="*" />
+		</Grid.RowDefinitions>
+			<Grid Margin="0,0,0,7">
+				<Grid.ColumnDefinitions>
+					<ColumnDefinition Width="*" />
+					<ColumnDefinition Width="Auto" />
+				</Grid.ColumnDefinitions>
+				<TextBlock
+					x:Name="ChannelTitle"
+					VerticalAlignment="Center"
+					FontSize="16"
+					FontWeight="Bold"
+					Text="Kanał" />
+				<Button
+					x:Name="OutputButton"
+					Grid.Column="1"
+					Width="112"
+					Click="OutputClick"
+					Content="Wyjście OFF" />
+			</Grid>
+			<TextBlock
+				Grid.Row="1"
+				Margin="0,0,0,8"
+				Foreground="#E2E2E2"
+				FontFamily="Segoe UI"
+				FontSize="11"
+				Text="Enter zatwierdza wpis. Strzałki wysyłają zmianę od razu."
+				TextWrapping="Wrap" />
+		<ScrollViewer
+			Grid.Row="2"
+			VerticalScrollBarVisibility="Auto"
+			HorizontalScrollBarVisibility="Disabled">
+			<StackPanel>
+			<TextBlock Margin="0,0,0,3" FontSize="11" Text="Przebieg" />
+			<ComboBox
+				x:Name="WaveformSelector"
+				Margin="0,0,0,7"
+				DisplayMemberPath="Name"
+				SelectionChanged="WaveformSelectionChanged" />
+			<controls:NumericEditor
+				x:Name="FrequencyEditor"
+				Label="Częstotliwość"
+				Unit="Hz"
+				Step="1"
+				Minimum="0.000001"
+				Maximum="30000000"
+				DecimalPlaces="3"
+				ValueCommitted="FrequencyCommitted" />
+			<controls:NumericEditor
+				x:Name="AmplitudeEditor"
+				Label="Amplituda"
+				Unit="Vpp"
+				Step="0.1"
+				Minimum="0"
+				Maximum="20"
+				DecimalPlaces="3"
+				ValueCommitted="AmplitudeCommitted" />
+			<controls:NumericEditor
+				x:Name="OffsetEditor"
+				Label="Offset"
+				Unit="V"
+				Step="0.1"
+				Minimum="-20"
+				Maximum="20"
+				DecimalPlaces="3"
+				ValueCommitted="OffsetCommitted" />
+			<controls:NumericEditor
+				x:Name="PhaseEditor"
+				Label="Faza"
+				Unit="°"
+				Step="1"
+				Minimum="0"
+				Maximum="360"
+				DecimalPlaces="1"
+				ValueCommitted="PhaseCommitted" />
+			<controls:NumericEditor
+				x:Name="DutyEditor"
+				Label="Wypełnienie"
+				Unit="%"
+				Step="1"
+				Minimum="0"
+				Maximum="100"
+				DecimalPlaces="1"
+				ValueCommitted="DutyCommitted" />
+			<controls:NumericEditor
+				x:Name="SymmetryEditor"
+				Label="Symetria"
+				Unit="%"
+				Step="1"
+				Minimum="0"
+				Maximum="100"
+				DecimalPlaces="1"
+				ValueCommitted="SymmetryCommitted" />
+			<controls:NumericEditor
+				x:Name="PulseWidthEditor"
+				Label="Szerokość impulsu"
+				Unit="µs"
+				Scale="0.000001"
+				Step="0.000001"
+				Minimum="0.000001"
+				Maximum="1000"
+				DecimalPlaces="3"
+				ValueCommitted="PulseWidthCommitted" />
+			<controls:NumericEditor
+				x:Name="NoiseDeviationEditor"
+				Label="Odchylenie standardowe"
+				Unit="V"
+				Step="0.1"
+				Minimum="0"
+				Maximum="20"
+				DecimalPlaces="3"
+				ValueCommitted="NoiseDeviationCommitted" />
+			<controls:NumericEditor
+				x:Name="NoiseMeanEditor"
+				Label="Średnia"
+				Unit="V"
+				Step="0.1"
+				Minimum="-20"
+				Maximum="20"
+				DecimalPlaces="3"
+				ValueCommitted="NoiseMeanCommitted" />
+			<controls:NumericEditor
+				x:Name="DcLevelEditor"
+				Label="Poziom DC"
+				Unit="V"
+				Step="0.1"
+				Minimum="-20"
+				Maximum="20"
+				DecimalPlaces="3"
+				ValueCommitted="DcLevelCommitted" />
+			<Grid Margin="0,7,0,0">
+				<Grid.ColumnDefinitions>
+					<ColumnDefinition Width="*" />
+					<ColumnDefinition Width="10" />
+					<ColumnDefinition Width="*" />
+				</Grid.ColumnDefinitions>
+				<StackPanel>
+					<TextBlock Margin="0,0,0,3" FontSize="11" Text="Obciążenie" />
+					<ComboBox
+						x:Name="LoadSelector"
+						SelectionChanged="LoadSelectionChanged">
+						<ComboBoxItem Tag="HighImpedance">Hi-Z</ComboBoxItem>
+						<ComboBoxItem Tag="Ohms50">50 Ω</ComboBoxItem>
+					</ComboBox>
+				</StackPanel>
+				<StackPanel Grid.Column="2">
+					<TextBlock Margin="0,0,0,3" FontSize="11" Text="Polaryzacja" />
+					<ComboBox
+						x:Name="PolaritySelector"
+						SelectionChanged="PolaritySelectionChanged">
+						<ComboBoxItem Tag="Normal">Normalna</ComboBoxItem>
+						<ComboBoxItem Tag="Inverted">Odwrócona</ComboBoxItem>
+					</ComboBox>
+				</StackPanel>
+			</Grid>
+			<Button
+				x:Name="RefreshButton"
+				Margin="0,10,0,5"
+				Click="RefreshClick"
+				Content="Odczytaj kanał" />
+			</StackPanel>
+		</ScrollViewer>
+	</Grid>
+</UserControl>

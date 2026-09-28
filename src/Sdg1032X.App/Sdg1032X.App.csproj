@@ -1,0 +1,27 @@
+<Project Sdk="Microsoft.NET.Sdk">
+	<PropertyGroup>
+		<OutputType>WinExe</OutputType>
+		<UseWPF>true</UseWPF>
+		<AssemblyName>SDG1032X.Controller</AssemblyName>
+		<Product>SIGLENT SDG1032X Controller</Product>
+		<Description>Podstawowe sterowanie generatorem SIGLENT SDG1032X przez LAN/VXI-11</Description>
+		<PackageLicenseExpression>PolyForm-Noncommercial-1.0.0</PackageLicenseExpression>
+		<ApplicationIcon>../../sdg1062x.ico</ApplicationIcon>
+		<Version>0.1.0</Version>
+	</PropertyGroup>
+	<PropertyGroup Condition="'$(Configuration)' == 'Release'">
+		<RuntimeIdentifier>win-x64</RuntimeIdentifier>
+		<SelfContained>true</SelfContained>
+		<PublishSingleFile>true</PublishSingleFile>
+		<IncludeNativeLibrariesForSelfExtract>true</IncludeNativeLibrariesForSelfExtract>
+		<EnableCompressionInSingleFile>true</EnableCompressionInSingleFile>
+		<DebugType>embedded</DebugType>
+	</PropertyGroup>
+	<ItemGroup>
+		<ProjectReference Include="../Sdg1032X.Core/Sdg1032X.Core.csproj" />
+		<Content Include="../../sdg1062x.png" Link="ReferenceAssets/sdg1062x.png" CopyToPublishDirectory="PreserveNewest" />
+		<EmbeddedResource Include="../../LICENSE" LogicalName="Sdg1032X.LICENSE" />
+		<Content Include="../../LICENSE" Link="LICENSE" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
+		<Content Include="../../THIRD-PARTY-NOTICES.md" Link="THIRD-PARTY-NOTICES.md" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
+	</ItemGroup>
+</Project>

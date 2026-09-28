@@ -1,0 +1,5 @@
+<Solution>
+	<Project Path="src/Sdg1032X.Core/Sdg1032X.Core.csproj" />
+	<Project Path="src/Sdg1032X.App/Sdg1032X.App.csproj" />
+	<Project Path="tests/Sdg1032X.Tests/Sdg1032X.Tests.csproj" />
+</Solution>

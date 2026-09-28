@@ -1,0 +1,11 @@
+<Project Sdk="Microsoft.NET.Sdk">
+	<PropertyGroup>
+		<OutputType>Exe</OutputType>
+		<RuntimeIdentifier>win-x64</RuntimeIdentifier>
+		<SelfContained>true</SelfContained>
+	</PropertyGroup>
+	<ItemGroup>
+		<ProjectReference Include="../../src/Sdg1032X.Core/Sdg1032X.Core.csproj" />
+		<ProjectReference Include="../../src/Sdg1032X.App/Sdg1032X.App.csproj" />
+	</ItemGroup>
+</Project>
