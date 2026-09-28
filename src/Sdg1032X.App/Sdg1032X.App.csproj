@@ -7,7 +7,7 @@
 		<Description>Podstawowe sterowanie generatorem SIGLENT SDG1032X przez LAN/VXI-11</Description>
 		<PackageLicenseExpression>PolyForm-Noncommercial-1.0.0</PackageLicenseExpression>
 		<ApplicationIcon>../../sdg1062x.ico</ApplicationIcon>
-		<Version>0.1.0</Version>
+		<Version>0.1.1</Version>
 	</PropertyGroup>
 	<PropertyGroup Condition="'$(Configuration)' == 'Release'">
 		<RuntimeIdentifier>win-x64</RuntimeIdentifier>

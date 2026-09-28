@@ -4,8 +4,9 @@ Wąska aplikacja Windows do podstawowego sterowania dwukanałowym generatorem SI
 
 ## Najważniejsze założenia
 
-- Okno ma 350 px szerokości i może działać obok innych aplikacji laboratoryjnych.
-- CH1 i CH2 są dostępne na zakładkach, więc widoczny jest jeden kanał jednocześnie.
+- Okno ma stały rozmiar 350 x 757 px i wysokość dopasowaną do natywnego okna aplikacji oscyloskopu.
+- CH1 i CH2 są dostępne na dwóch zakładkach zajmujących po połowie szerokości, więc widoczny jest jeden kanał jednocześnie.
+- Nagłówki zakładek pokazują stan wyjścia, częstotliwość i Vpp w skróconej notacji inżynierskiej.
 - Pola parametrów są ułożone pionowo.
 - Każda wartość ma przyciski góra/dół z automatycznym powtarzaniem.
 - Enter zatwierdza wartość wpisaną z klawiatury.

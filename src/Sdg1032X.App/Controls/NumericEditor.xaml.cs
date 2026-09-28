@@ -211,6 +211,6 @@ public partial class NumericEditor : UserControl
 		}
 		Editor.Text=EngineeringValue.FormatDisplay(Value,Scale,DecimalPlaces);
 		Editor.BorderBrush=Brushes.Transparent;
-		Editor.ToolTip="Enter zatwierdza wpis. Strzałki zmieniają i wysyłają wartość.";
+		Editor.ToolTip=null;
 	}
 }

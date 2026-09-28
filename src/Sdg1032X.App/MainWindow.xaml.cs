@@ -19,8 +19,8 @@ public partial class MainWindow : Window
 		SystemTheme.UseImmersiveDarkMode(this);
 		Channel1.Configure(1,()=>session,ShowStatus);
 		Channel2.Configure(2,()=>session,ShowStatus);
-		Channel1.OutputStateChanged+=(_, enabled)=>Channel1Tab.Header=enabled ? "CH1  ON" : "CH1  OFF";
-		Channel2.OutputStateChanged+=(_, enabled)=>Channel2Tab.Header=enabled ? "CH2  ON" : "CH2  OFF";
+		Channel1.SummaryChanged+=(_, eventArgs)=>Channel1Header.Text=eventArgs.Text;
+		Channel2.SummaryChanged+=(_, eventArgs)=>Channel2Header.Text=eventArgs.Text;
 		SetControlsEnabled(false);
 		Loaded+=MainWindowLoaded;
 		Closed+=MainWindowClosed;
@@ -141,7 +141,9 @@ public partial class MainWindow : Window
 	private void ShowStatus(string message,bool error)
 	{
 		StatusText.Text=message;
-		StatusText.Foreground=error ? Brushes.DarkRed : Brushes.Black;
+		StatusText.Foreground=error
+			? new SolidColorBrush(Color.FromRgb(255,128,128))
+			: (Brush)FindResource("MutedTextBrush");
 	}
 
 	private void AuthorClick(object sender,RoutedEventArgs eventArgs)

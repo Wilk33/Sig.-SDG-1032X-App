@@ -5,82 +5,88 @@
 	xmlns:controls="clr-namespace:Sdg1032X.App.Controls"
 	Title="SIGLENT SDG1032X"
 	Width="350"
-	Height="680"
-	MinWidth="330"
-	MinHeight="600"
+	Height="757"
+	ResizeMode="NoResize"
 	WindowStartupLocation="CenterScreen">
-	<Grid>
+	<Grid Background="{StaticResource WindowBrush}">
 		<Grid.RowDefinitions>
-			<RowDefinition Height="Auto" />
-			<RowDefinition Height="Auto" />
+			<RowDefinition Height="25" />
+			<RowDefinition Height="48" />
 			<RowDefinition Height="*" />
-			<RowDefinition Height="Auto" />
+			<RowDefinition Height="27" />
 		</Grid.RowDefinitions>
-		<Menu
-			Grid.Row="0"
-			Height="25"
-			Background="#171717"
-			Foreground="White">
+		<Menu Grid.Row="0">
+			<Menu.ItemsPanel>
+				<ItemsPanelTemplate>
+					<StackPanel Orientation="Horizontal" />
+				</ItemsPanelTemplate>
+			</Menu.ItemsPanel>
 			<MenuItem Header="O aplikacji">
 				<MenuItem Header="Autor" Click="AuthorClick" />
 				<MenuItem Header="Licencja" Click="LicenseClick" />
 			</MenuItem>
 		</Menu>
-		<GroupBox Grid.Row="1" Header="Połączenie LAN / VXI-11">
-			<Grid>
-				<Grid.ColumnDefinitions>
-					<ColumnDefinition Width="*" />
-					<ColumnDefinition Width="8" />
-					<ColumnDefinition Width="96" />
-				</Grid.ColumnDefinitions>
-				<TextBox
-					x:Name="HostEditor"
-					Height="30"
-					Padding="5,3"
-					VerticalContentAlignment="Center"
-					Text="192.168.200.123"
-					ToolTip="Adres IP generatora" />
-				<Button
-					x:Name="ConnectionButton"
-					Grid.Column="2"
-					Click="ConnectionClick"
-					Content="Offline" />
-			</Grid>
-		</GroupBox>
+		<Grid Grid.Row="1" Margin="8,8,8,6">
+			<Grid.ColumnDefinitions>
+				<ColumnDefinition Width="*" />
+				<ColumnDefinition Width="8" />
+				<ColumnDefinition Width="96" />
+			</Grid.ColumnDefinitions>
+			<TextBox
+				x:Name="HostEditor"
+				Height="30"
+				Padding="6,4"
+				VerticalContentAlignment="Center"
+				Text="192.168.200.123" />
+			<Button
+				x:Name="ConnectionButton"
+				Grid.Column="2"
+				Click="ConnectionClick"
+				Content="Offline" />
+		</Grid>
 		<TabControl
 			x:Name="ChannelTabs"
 			Grid.Row="2"
-			Margin="8,2,8,5"
-			Background="#616161"
-			BorderBrush="#8A8A8A">
-			<TabControl.Resources>
-				<Style TargetType="TabItem">
-					<Setter Property="FontFamily" Value="Consolas" />
-					<Setter Property="FontSize" Value="13" />
-					<Setter Property="Padding" Value="20,7" />
-				</Style>
-			</TabControl.Resources>
-			<TabItem x:Name="Channel1Tab" Header="CH1">
+			Margin="8,0,8,0">
+			<TabControl.ItemsPanel>
+				<ItemsPanelTemplate>
+					<UniformGrid Rows="1" Columns="2" />
+				</ItemsPanelTemplate>
+			</TabControl.ItemsPanel>
+			<TabItem x:Name="Channel1Tab">
+				<TabItem.Header>
+					<TextBlock
+						x:Name="Channel1Header"
+						HorizontalAlignment="Center"
+						Foreground="{StaticResource TextBrush}"
+						Text="CH1  OFF&#x0a;0Hz  0Vpp"
+						TextAlignment="Center" />
+				</TabItem.Header>
 				<controls:ChannelControl x:Name="Channel1" />
 			</TabItem>
-			<TabItem x:Name="Channel2Tab" Header="CH2">
+			<TabItem x:Name="Channel2Tab">
+				<TabItem.Header>
+					<TextBlock
+						x:Name="Channel2Header"
+						HorizontalAlignment="Center"
+						Foreground="{StaticResource TextBrush}"
+						Text="CH2  OFF&#x0a;0Hz  0Vpp"
+						TextAlignment="Center" />
+				</TabItem.Header>
 				<controls:ChannelControl x:Name="Channel2" />
 			</TabItem>
 		</TabControl>
 		<Border
 			Grid.Row="3"
 			Padding="7,5"
-			Background="#E5E5E5"
-			BorderBrush="#A0A0A0"
-			BorderThickness="1,1,0,0">
+			Background="{StaticResource WindowBrush}">
 			<TextBlock
 				x:Name="StatusText"
-				Foreground="#222222"
+				Foreground="{StaticResource MutedTextBrush}"
 				FontFamily="Consolas"
 				FontSize="11"
 				Text="Stan generatora: OFFLINE"
-				TextTrimming="CharacterEllipsis"
-				ToolTip="{Binding Text,RelativeSource={RelativeSource Self}}" />
+				TextTrimming="CharacterEllipsis" />
 		</Border>
 	</Grid>
 </Window>

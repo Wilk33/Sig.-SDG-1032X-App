@@ -122,6 +122,34 @@ Test("Edytor wartości przyjmuje polski separator i skaluje jednostkę",()=>
 	Reject(()=>EngineeringValue.ParseDisplay("abc",1));
 });
 
+Test("Nagłówek kanału używa skróconych jednostek inżynierskich",()=>
+{
+	CultureInfo.CurrentCulture=new("pl-PL");
+	Equal("3kHz",ChannelSummaryFormatter.FormatEngineering(3000,"Hz"));
+	Equal("2,5mVpp",ChannelSummaryFormatter.FormatEngineering(0.0025,"Vpp"));
+	Equal("CH1  ON\n3kHz  4Vpp",ChannelSummaryFormatter.Format(1,true,3000,4));
+});
+
+Test("Nagłówek kanału odrzuca nieprawidłowy numer i wartości",()=>
+{
+	try
+	{
+		ChannelSummaryFormatter.Format(3,false,1000,1);
+	}
+	catch(ArgumentOutOfRangeException)
+	{
+		try
+		{
+			ChannelSummaryFormatter.Format(1,false,double.NaN,1);
+		}
+		catch(ArgumentOutOfRangeException)
+		{
+			return;
+		}
+	}
+	throw new Exception("Nieprawidłowe dane nagłówka zostały zaakceptowane");
+});
+
 Test("Kolejka zastępuje starszą wartość tego samego parametru",()=>
 {
 	InstrumentRequestQueue queue=new();
@@ -242,7 +270,7 @@ Test("Metadane aplikacji zachowują autora, wersję i licencję",()=>
 	Equal("Mateusz Skipor",ProductInformation.AuthorName);
 	Equal("Inżynier technik elektroniki",ProductInformation.AuthorProfession);
 	Equal("mskiporsklep@op.pl",ProductInformation.AuthorEmail);
-	Equal("0.1.0",ProductInformation.Version);
+	Equal("0.1.1",ProductInformation.Version);
 	if(!ProductInformation.GetWindowTitle(true).EndsWith(" - DEMO",StringComparison.Ordinal))
 	{
 		throw new Exception("Brak oznaczenia trybu demonstracyjnego");

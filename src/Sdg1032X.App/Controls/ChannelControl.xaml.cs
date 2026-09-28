@@ -13,6 +13,11 @@ public sealed record WaveformChoice(string Name,BasicWaveform Value)
 	}
 }
 
+public sealed class ChannelSummaryChangedEventArgs(string text) : EventArgs
+{
+	public string Text { get; }=text;
+}
+
 public partial class ChannelControl : UserControl
 {
 	private Func<GeneratorSession?> sessionProvider=()=>null;
@@ -20,6 +25,8 @@ public partial class ChannelControl : UserControl
 	private int channel;
 	private bool outputEnabled;
 	private bool updating;
+	private double frequencyHz;
+	private double amplitudeVpp;
 	private OutputLoad confirmedLoad=OutputLoad.HighImpedance;
 	private double? confirmedLoadOhms;
 
@@ -42,6 +49,7 @@ public partial class ChannelControl : UserControl
 	}
 
 	public event EventHandler<bool>? OutputStateChanged;
+	public event EventHandler<ChannelSummaryChangedEventArgs>? SummaryChanged;
 
 	public void Configure(
 		int channelNumber,
@@ -51,7 +59,7 @@ public partial class ChannelControl : UserControl
 		channel=channelNumber;
 		sessionProvider=currentSession;
 		showStatus=statusHandler;
-		ChannelTitle.Text="Kanał "+channel;
+		RaiseSummaryChanged();
 	}
 
 	public void ApplySnapshot(ChannelSnapshot snapshot)
@@ -61,6 +69,8 @@ public partial class ChannelControl : UserControl
 		{
 			WaveformSelector.SelectedItem=((WaveformChoice[])WaveformSelector.ItemsSource)
 				.Single(choice=>choice.Value == snapshot.Waveform);
+			frequencyHz=snapshot.FrequencyHz;
+			amplitudeVpp=snapshot.AmplitudeVpp;
 			FrequencyEditor.Value=snapshot.FrequencyHz;
 			AmplitudeEditor.Value=snapshot.AmplitudeVpp;
 			OffsetEditor.Value=snapshot.OffsetVolts;
@@ -171,7 +181,19 @@ public partial class ChannelControl : UserControl
 		string command=SiglentProtocol.ParameterCommand(channel,parameter,value);
 		_ = ObserveLatestAsync(
 			session.SetLatestAsync($"C{channel}:{parameter}",command),
-			$"CH{channel}: {ParameterName(parameter)} = {value:G6}");
+			$"CH{channel}: {ParameterName(parameter)} = {value:G6}",
+			()=>
+			{
+				if(parameter == GeneratorParameter.Frequency)
+				{
+					frequencyHz=value;
+				}
+				else if(parameter == GeneratorParameter.Amplitude)
+				{
+					amplitudeVpp=value;
+				}
+				RaiseSummaryChanged();
+			});
 	}
 
 	private async void LoadSelectionChanged(object sender,SelectionChangedEventArgs eventArgs)
@@ -309,11 +331,12 @@ public partial class ChannelControl : UserControl
 		}
 	}
 
-	private async Task ObserveLatestAsync(Task task,string success)
+	private async Task ObserveLatestAsync(Task task,string success,Action? completed=null)
 	{
 		try
 		{
 			await task;
+			completed?.Invoke();
 			showStatus(success,false);
 		}
 		catch(TaskCanceledException)
@@ -334,6 +357,21 @@ public partial class ChannelControl : UserControl
 			: new SolidColorBrush(Color.FromRgb(70,70,70));
 		OutputButton.Foreground=Brushes.White;
 		OutputStateChanged?.Invoke(this,enabled);
+		RaiseSummaryChanged();
+	}
+
+	private void RaiseSummaryChanged()
+	{
+		if(channel is not (1 or 2))
+		{
+			return;
+		}
+		string text=ChannelSummaryFormatter.Format(
+			channel,
+			outputEnabled,
+			frequencyHz,
+			amplitudeVpp);
+		SummaryChanged?.Invoke(this,new(text));
 	}
 
 	private void UpdateFieldVisibility(BasicWaveform waveform)
