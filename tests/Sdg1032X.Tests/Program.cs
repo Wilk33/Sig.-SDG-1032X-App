@@ -1,8 +1,13 @@
 using System.Buffers.Binary;
 using System.Globalization;
+using System.IO;
 using System.Net;
 using System.Net.Sockets;
 using System.Text;
+using System.Windows;
+using System.Windows.Controls;
+using System.Windows.Controls.Primitives;
+using System.Windows.Media;
 using Sdg1032X.App;
 using Sdg1032X.App.Controls;
 using Sdg1032X.Core;
@@ -21,7 +26,7 @@ void Test(string name,Action action)
 	catch(Exception exception)
 	{
 		failed++;
-		Console.WriteLine("FAIL "+name+": "+exception.Message);
+		Console.WriteLine("FAIL "+name+": "+exception);
 	}
 }
 
@@ -52,6 +57,64 @@ void Reject(Action action)
 		return;
 	}
 	throw new Exception("Nieprawidłowe dane zostały zaakceptowane");
+}
+
+void RunSta(Action action)
+{
+	Exception? failure=null;
+	Thread thread=new(()=>
+	{
+		try
+		{
+			action();
+		}
+		catch(Exception exception)
+		{
+			failure=exception;
+		}
+	});
+	thread.SetApartmentState(ApartmentState.STA);
+	thread.Start();
+	thread.Join();
+	if(failure is not null)
+	{
+		throw failure;
+	}
+}
+
+IEnumerable<T> VisualChildren<T>(DependencyObject parent) where T : DependencyObject
+{
+	for(int index=0;index<VisualTreeHelper.GetChildrenCount(parent);index++)
+	{
+		DependencyObject child=VisualTreeHelper.GetChild(parent,index);
+		if(child is T typed)
+		{
+			yield return typed;
+		}
+		foreach(T descendant in VisualChildren<T>(child))
+		{
+			yield return descendant;
+		}
+	}
+}
+
+IEnumerable<T> LogicalChildren<T>(DependencyObject parent) where T : DependencyObject
+{
+	foreach(object childValue in LogicalTreeHelper.GetChildren(parent))
+	{
+		if(childValue is not DependencyObject child)
+		{
+			continue;
+		}
+		if(child is T typed)
+		{
+			yield return typed;
+		}
+		foreach(T descendant in LogicalChildren<T>(child))
+		{
+			yield return descendant;
+		}
+	}
 }
 
 Test("Lista przebiegów zawiera wyłącznie sześć podstawowych typów",()=>
@@ -270,7 +333,7 @@ Test("Metadane aplikacji zachowują autora, wersję i licencję",()=>
 	Equal("Mateusz Skipor",ProductInformation.AuthorName);
 	Equal("Inżynier technik elektroniki",ProductInformation.AuthorProfession);
 	Equal("mskiporsklep@op.pl",ProductInformation.AuthorEmail);
-	Equal("0.1.1",ProductInformation.Version);
+	Equal("0.1.2",ProductInformation.Version);
 	if(!ProductInformation.GetWindowTitle(true).EndsWith(" - DEMO",StringComparison.Ordinal))
 	{
 		throw new Exception("Brak oznaczenia trybu demonstracyjnego");
@@ -286,6 +349,68 @@ Test("Pozycja przebiegu udostępnia czytelną nazwę dla UI Automation",()=>
 {
 	WaveformChoice choice=new("Prostokąt",BasicWaveform.Square);
 	Equal("Prostokąt",choice.ToString());
+});
+
+Test("Interfejs zachowuje kompaktowy rozmiar i pełne pola klikalne",()=>
+{
+	RunSta(()=>
+	{
+		Sdg1032X.App.App application=new();
+		application.InitializeComponent();
+		MainWindow window=new();
+		window.Measure(new Size(350,749));
+		window.Arrange(new Rect(0,0,350,749));
+		window.ApplyTemplate();
+
+		Equal(749d,window.Height);
+		MenuItem about=LogicalChildren<MenuItem>(window)
+			.First(item=>item.Items.Count > 0);
+		Equal("O Aplikacji",about.Header);
+		TextBox host=LogicalChildren<TextBox>(window)
+			.First(textBox=>textBox.Name == "HostEditor");
+		Equal("192.168.200.132",host.Text);
+		if(host.Padding.Top>2 || host.Padding.Bottom>2)
+		{
+			throw new Exception("Pole IP ma zbyt duży pionowy margines wewnętrzny");
+		}
+		if(LogicalChildren<Button>(window)
+			.Any(button=>Equals(button.Content,"Odczytaj kanał")))
+		{
+			throw new Exception("Pozostał zbędny przycisk odczytu kanału");
+		}
+
+		ComboBox combo=LogicalChildren<ComboBox>(window).First();
+		combo.Measure(new Size(300,30));
+		combo.Arrange(new Rect(0,0,300,30));
+		combo.ApplyTemplate();
+		ToggleButton toggle=VisualChildren<ToggleButton>(combo).Single();
+		if(toggle.ActualWidth+1<combo.ActualWidth)
+		{
+			throw new Exception("Lista otwiera się tylko po kliknięciu strzałki");
+		}
+
+		InfoWindow author=new("Autor","Autor testowy",false);
+		author.Measure(new Size(author.Width,author.Height));
+		author.Arrange(new Rect(0,0,author.Width,author.Height));
+		author.ApplyTemplate();
+		if(LogicalChildren<Button>(author).Any())
+		{
+			throw new Exception("Okno autora nadal zawiera przycisk Zamknij");
+		}
+		if(!LogicalChildren<TextBlock>(author).Any(textBlock=>textBlock.Text == "Autor testowy"))
+		{
+			throw new Exception("Informacje o autorze nie używają właściwego tła okna");
+		}
+
+		InfoWindow license=new("Licencja","Treść licencji",true);
+		license.Measure(new Size(license.Width,license.Height));
+		license.Arrange(new Rect(0,0,license.Width,license.Height));
+		license.ApplyTemplate();
+		if(LogicalChildren<Button>(license).Any())
+		{
+			throw new Exception("Okno licencji nadal zawiera przycisk Zamknij");
+		}
+	});
 });
 
 Console.WriteLine($"Wynik: {passed} zaliczonych, {failed} niezaliczonych");

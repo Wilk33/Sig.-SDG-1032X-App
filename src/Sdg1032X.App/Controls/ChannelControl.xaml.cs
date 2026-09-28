@@ -303,18 +303,12 @@ public partial class ChannelControl : UserControl
 		}
 	}
 
-	private async void RefreshClick(object sender,RoutedEventArgs eventArgs)
-	{
-		await RefreshAsync();
-	}
-
 	private async Task RefreshAsync()
 	{
 		if(sessionProvider() is not GeneratorSession session)
 		{
 			return;
 		}
-		RefreshButton.IsEnabled=false;
 		try
 		{
 			ChannelSnapshot snapshot=await session.ReadChannelAsync(channel);
@@ -324,10 +318,6 @@ public partial class ChannelControl : UserControl
 		catch(Exception exception)
 		{
 			showStatus(exception.Message,true);
-		}
-		finally
-		{
-			RefreshButton.IsEnabled=true;
 		}
 	}
 

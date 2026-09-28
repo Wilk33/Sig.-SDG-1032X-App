@@ -8,41 +8,57 @@ public sealed class InfoWindow : Window
 	public InfoWindow(string title,string text,bool longText)
 	{
 		Title=title;
-		Width=longText ? 720 : 390;
-		Height=longText ? 560 : 230;
-		MinWidth=330;
-		MinHeight=190;
+		Width=longText ? 720 : 430;
+		Height=longText ? 560 : 190;
+		MinWidth=longText ? 520 : 430;
+		MinHeight=longText ? 360 : 190;
+		ResizeMode=longText ? ResizeMode.CanResize : ResizeMode.NoResize;
+		ShowInTaskbar=false;
 		WindowStartupLocation=WindowStartupLocation.CenterOwner;
 		SystemTheme.UseImmersiveDarkMode(this);
 
-		Grid layout=new();
-		layout.RowDefinitions.Add(new(){Height=new(1,GridUnitType.Star)});
-		layout.RowDefinitions.Add(new(){Height=GridLength.Auto});
-		TextBox content=new()
+		Grid layout=new()
 		{
-			Text=text,
-			IsReadOnly=true,
-			AcceptsReturn=true,
-			TextWrapping=longText ? TextWrapping.Wrap : TextWrapping.NoWrap,
-			VerticalScrollBarVisibility=ScrollBarVisibility.Auto,
-			HorizontalScrollBarVisibility=longText ? ScrollBarVisibility.Disabled : ScrollBarVisibility.Auto,
-			Margin=new(10),
-			Padding=new(8)
+			Background=(System.Windows.Media.Brush)FindResource("WindowBrush")
 		};
-		Button close=new()
+		if(longText)
 		{
-			Content="Zamknij",
-			Width=100,
-			Margin=new(10,0,10,10),
-			HorizontalAlignment=HorizontalAlignment.Right,
-			IsDefault=true,
-			IsCancel=true
-		};
-		close.Click+=(_, _)=>Close();
-		Grid.SetRow(content,0);
-		Grid.SetRow(close,1);
-		layout.Children.Add(content);
-		layout.Children.Add(close);
+			layout.Children.Add(new TextBox
+			{
+				Text=text,
+				IsReadOnly=true,
+				AcceptsReturn=true,
+				TextWrapping=TextWrapping.Wrap,
+				VerticalScrollBarVisibility=ScrollBarVisibility.Auto,
+				HorizontalScrollBarVisibility=ScrollBarVisibility.Disabled,
+				Margin=new(14),
+				Padding=new(10),
+				FontSize=13,
+				Background=(System.Windows.Media.Brush)FindResource("ControlBrush"),
+				Foreground=(System.Windows.Media.Brush)FindResource("TextBrush")
+			});
+		}
+		else
+		{
+			StackPanel author=new()
+			{
+				Margin=new(22),
+				VerticalAlignment=VerticalAlignment.Center
+			};
+			string[] lines=text.Split('\n');
+			for(int index=0;index<lines.Length;index++)
+			{
+				author.Children.Add(new TextBlock
+				{
+					Text=lines[index],
+					Margin=index == 0 ? new(0) : new(0,8,0,0),
+					HorizontalAlignment=HorizontalAlignment.Center,
+					FontSize=index == 0 ? 22 : 16,
+					Foreground=(System.Windows.Media.Brush)FindResource("TextBrush")
+				});
+			}
+			layout.Children.Add(author);
+		}
 		Content=layout;
 	}
 }

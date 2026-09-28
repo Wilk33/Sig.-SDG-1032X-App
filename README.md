@@ -4,7 +4,7 @@ Wąska aplikacja Windows do podstawowego sterowania dwukanałowym generatorem SI
 
 ## Najważniejsze założenia
 
-- Okno ma stały rozmiar 350 x 757 px i wysokość dopasowaną do natywnego okna aplikacji oscyloskopu.
+- Okno ma stały rozmiar 350 x 749 px i wysokość dopasowaną do natywnego okna aplikacji oscyloskopu.
 - CH1 i CH2 są dostępne na dwóch zakładkach zajmujących po połowie szerokości, więc widoczny jest jeden kanał jednocześnie.
 - Nagłówki zakładek pokazują stan wyjścia, częstotliwość i Vpp w skróconej notacji inżynierskiej.
 - Pola parametrów są ułożone pionowo.
@@ -69,7 +69,7 @@ Wymagany jest .NET 10 SDK dla Windows.
 
 ## Status weryfikacji
 
-Testy automatyczne i tryb demonstracyjny nie zmieniają stanu fizycznego urządzenia. Sterowanie prawdziwym generatorem wymaga oddzielnego testu sprzętowego opisanego w [docs/hardware-testing.md](docs/hardware-testing.md).
+Testy automatyczne i tryb demonstracyjny nie zmieniają stanu fizycznego urządzenia. Zakres ograniczonej walidacji wersji 0.1.2 na rzeczywistym generatorze oraz pełna procedura testowa są opisane w [docs/hardware-testing.md](docs/hardware-testing.md).
 
 ## Autor i licencja
 

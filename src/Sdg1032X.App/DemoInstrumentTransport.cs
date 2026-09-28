@@ -110,7 +110,7 @@ internal sealed class DemoInstrumentTransport : IInstrumentTransport
 		{
 			if(command.Equals("*IDN?",StringComparison.OrdinalIgnoreCase))
 			{
-				return Bytes("SIGLENT,SDG1032X,DEMO,0.1.1");
+				return Bytes("SIGLENT,SDG1032X,DEMO,0.1.2");
 			}
 			if(!TryChannel(command,out int channel,out string body))
 			{

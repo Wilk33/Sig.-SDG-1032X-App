@@ -24,3 +24,16 @@
 ## Raport
 
 Zapisz model, wersję firmware, użyte połączenie, wynik każdego kroku oraz wszystkie różnice względem panelu urządzenia. Test programu bez generatora nie jest potwierdzeniem działania zapisu sprzętowego.
+
+## Walidacja wersji 0.1.2
+
+28 września 2026 r. wykonano ograniczony test na rzeczywistym generatorze:
+
+- urządzenie zostało poprawnie rozpoznane jako SIGLENT SDG1032X z firmware 1.01.01.33R8,
+- aplikacja automatycznie odczytała ustawienia i stan obu kanałów po połączeniu,
+- oba wyjścia były wyłączone przed testem i pozostały wyłączone po teście,
+- CH1 przyjął tymczasową zmianę częstotliwości z 3000 Hz na 3001 Hz,
+- CH2 przyjął tymczasową zmianę częstotliwości z 2000 Hz na 2001 Hz,
+- pierwotne częstotliwości 3000 Hz i 2000 Hz zostały przywrócone i potwierdzone ponownym odczytem.
+
+Test nie obejmował włączania wyjść, zmiany typu przebiegu, amplitudy, offsetu, obciążenia ani polaryzacji.

@@ -5,7 +5,8 @@
 	xmlns:controls="clr-namespace:Sdg1032X.App.Controls"
 	Title="SIGLENT SDG1032X"
 	Width="350"
-	Height="757"
+	Height="749"
+	Icon="/SDG1032X.Controller;component/Assets/sdg1062x.ico"
 	ResizeMode="NoResize"
 	WindowStartupLocation="CenterScreen">
 	<Grid Background="{StaticResource WindowBrush}">
@@ -21,7 +22,7 @@
 					<StackPanel Orientation="Horizontal" />
 				</ItemsPanelTemplate>
 			</Menu.ItemsPanel>
-			<MenuItem Header="O aplikacji">
+			<MenuItem Header="O Aplikacji">
 				<MenuItem Header="Autor" Click="AuthorClick" />
 				<MenuItem Header="Licencja" Click="LicenseClick" />
 			</MenuItem>
@@ -35,9 +36,9 @@
 			<TextBox
 				x:Name="HostEditor"
 				Height="30"
-				Padding="6,4"
+				Padding="6,1"
 				VerticalContentAlignment="Center"
-				Text="192.168.200.123" />
+				Text="192.168.200.132" />
 			<Button
 				x:Name="ConnectionButton"
 				Grid.Column="2"
