@@ -20,6 +20,8 @@
 	<ItemGroup>
 		<ProjectReference Include="../Sdg1032X.Core/Sdg1032X.Core.csproj" />
 		<Content Include="../../sdg1062x.png" Link="ReferenceAssets/sdg1062x.png" CopyToPublishDirectory="PreserveNewest" />
+		<Content Include="../../README.md" Link="README.md" CopyToPublishDirectory="PreserveNewest" />
+		<Content Include="../../docs/hardware-testing.md" Link="docs/hardware-testing.md" CopyToPublishDirectory="PreserveNewest" />
 		<EmbeddedResource Include="../../LICENSE" LogicalName="Sdg1032X.LICENSE" />
 		<Content Include="../../LICENSE" Link="LICENSE" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
 		<Content Include="../../THIRD-PARTY-NOTICES.md" Link="THIRD-PARTY-NOTICES.md" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
