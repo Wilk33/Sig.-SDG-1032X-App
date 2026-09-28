@@ -36,6 +36,7 @@ public sealed class InstrumentRequestQueue
 	private readonly object gate=new();
 	private readonly Queue<InstrumentRequest> priority=[];
 	private readonly LinkedList<(string Key,InstrumentRequest Request)> latest=[];
+	private readonly Queue<InstrumentRequest> ordered=[];
 	private readonly Dictionary<string,LinkedListNode<(string Key,InstrumentRequest Request)>> byKey=[];
 	private readonly SemaphoreSlim signal=new(0,1);
 
@@ -45,7 +46,7 @@ public sealed class InstrumentRequestQueue
 		{
 			lock(gate)
 			{
-				return priority.Count+latest.Count;
+				return priority.Count+latest.Count+ordered.Count;
 			}
 		}
 	}
@@ -80,6 +81,38 @@ public sealed class InstrumentRequestQueue
 		return request;
 	}
 
+	public InstrumentRequest EnqueueOrdered(string command)
+	{
+		InstrumentRequest request=new(command);
+		lock(gate)
+		{
+			ordered.Enqueue(request);
+		}
+		Signal();
+		return request;
+	}
+
+	public void CancelAll()
+	{
+		lock(gate)
+		{
+			while(priority.TryDequeue(out InstrumentRequest? request))
+			{
+				request.Cancel();
+			}
+			foreach((string _,InstrumentRequest request) in latest)
+			{
+				request.Cancel();
+			}
+			latest.Clear();
+			byKey.Clear();
+			while(ordered.TryDequeue(out InstrumentRequest? request))
+			{
+				request.Cancel();
+			}
+		}
+	}
+
 	public InstrumentRequest TakeNext()
 	{
 		if(!TryTakeNext(out InstrumentRequest? request))
@@ -98,15 +131,14 @@ public sealed class InstrumentRequestQueue
 				return true;
 			}
 			LinkedListNode<(string Key,InstrumentRequest Request)>? node=latest.First;
-			if(node is null)
+			if(node is not null)
 			{
-				request=null;
-				return false;
+				latest.RemoveFirst();
+				byKey.Remove(node.Value.Key);
+				request=node.Value.Request;
+				return true;
 			}
-			latest.RemoveFirst();
-			byKey.Remove(node.Value.Key);
-			request=node.Value.Request;
-			return true;
+			return ordered.TryDequeue(out request);
 		}
 	}
 

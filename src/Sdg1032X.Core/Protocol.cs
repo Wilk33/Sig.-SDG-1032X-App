@@ -78,7 +78,13 @@ public static class SiglentProtocol
 	public static string LoadCommand(int channel,OutputLoad load)
 	{
 		ValidateChannel(channel);
-		return $"C{channel}:OUTP LOAD,"+(load == OutputLoad.HighImpedance ? "HZ" : "50");
+		string value=load switch
+		{
+			OutputLoad.HighImpedance=>"HZ",
+			OutputLoad.Ohms50=>"50",
+			_=>throw new ArgumentOutOfRangeException(nameof(load))
+		};
+		return $"C{channel}:OUTP LOAD,{value}";
 	}
 
 	public static string PolarityCommand(int channel,OutputPolarity polarity)
@@ -111,6 +117,7 @@ public static class SiglentProtocol
 		};
 		string outputState=state.GetValueOrDefault("STATE") ??
 			throw new InvalidDataException("Brak stanu wyjścia w odpowiedzi.");
+		(OutputLoad load,double? loadOhms)=ParseLoad(state);
 		return new()
 		{
 			Channel=channel,
@@ -125,13 +132,26 @@ public static class SiglentProtocol
 			NoiseStandardDeviation=Number(wave,"STDEV"),
 			NoiseMean=Number(wave,"MEAN"),
 			OutputEnabled=outputState.Equals("ON",StringComparison.OrdinalIgnoreCase),
-			Load=state.GetValueOrDefault("LOAD")?.Equals("HZ",StringComparison.OrdinalIgnoreCase) == true
-				? OutputLoad.HighImpedance
-				: OutputLoad.Ohms50,
+			Load=load,
+			LoadOhms=loadOhms,
 			Polarity=state.GetValueOrDefault("PLRT")?.Equals("INVT",StringComparison.OrdinalIgnoreCase) == true
 				? OutputPolarity.Inverted
 				: OutputPolarity.Normal
 		};
+	}
+
+	private static (OutputLoad Load,double? Ohms) ParseLoad(Dictionary<string,string> state)
+	{
+		string value=state.GetValueOrDefault("LOAD") ??
+			throw new InvalidDataException("Brak obciążenia wyjścia w odpowiedzi.");
+		if(value.Equals("HZ",StringComparison.OrdinalIgnoreCase))
+		{
+			return (OutputLoad.HighImpedance,null);
+		}
+		double ohms=ParseScpiNumber(value);
+		return Math.Abs(ohms-50) < 1e-9
+			? (OutputLoad.Ohms50,50)
+			: (OutputLoad.Custom,ohms);
 	}
 
 	private static void ValidateChannel(int channel)

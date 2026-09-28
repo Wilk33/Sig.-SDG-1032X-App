@@ -69,7 +69,23 @@ public partial class ChannelControl : UserControl
 			NoiseDeviationEditor.Value=snapshot.NoiseStandardDeviation;
 			NoiseMeanEditor.Value=snapshot.NoiseMean;
 			DcLevelEditor.Value=snapshot.OffsetVolts;
-			LoadSelector.SelectedIndex=snapshot.Load == OutputLoad.HighImpedance ? 0 : 1;
+			while(LoadSelector.Items.Count > 2)
+			{
+				LoadSelector.Items.RemoveAt(2);
+			}
+			if(snapshot.Load == OutputLoad.Custom)
+			{
+				LoadSelector.Items.Add(new ComboBoxItem
+				{
+					Content=$"{snapshot.LoadOhms:G} Ω (odczyt)",
+					Tag="Custom"
+				});
+				LoadSelector.SelectedIndex=2;
+			}
+			else
+			{
+				LoadSelector.SelectedIndex=snapshot.Load == OutputLoad.HighImpedance ? 0 : 1;
+			}
 			PolaritySelector.SelectedIndex=snapshot.Polarity == OutputPolarity.Normal ? 0 : 1;
 			SetOutputState(snapshot.OutputEnabled);
 			UpdateFieldVisibility(snapshot.Waveform);
@@ -172,6 +188,10 @@ public partial class ChannelControl : UserControl
 
 	private async void LoadSelectionChanged(object sender,SelectionChangedEventArgs eventArgs)
 	{
+		if(LoadSelector.SelectedItem is ComboBoxItem item && item.Tag?.ToString() == "Custom")
+		{
+			return;
+		}
 		if(updating || sessionProvider() is not GeneratorSession session)
 		{
 			return;
@@ -208,9 +228,15 @@ public partial class ChannelControl : UserControl
 		OutputButton.IsEnabled=false;
 		try
 		{
-			await session.WritePriorityAsync(SiglentProtocol.OutputCommand(channel,requested));
+			Task operation=requested
+				? session.WriteOrderedAsync(SiglentProtocol.OutputCommand(channel,true))
+				: session.WritePriorityAsync(SiglentProtocol.OutputCommand(channel,false));
+			await operation;
 			SetOutputState(requested);
 			showStatus($"CH{channel}: wyjście "+(requested ? "włączone." : "wyłączone."),false);
+		}
+		catch(OperationCanceledException)
+		{
 		}
 		catch(Exception exception)
 		{

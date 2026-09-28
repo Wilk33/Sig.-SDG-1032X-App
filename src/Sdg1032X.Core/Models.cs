@@ -26,7 +26,8 @@ public enum GeneratorParameter
 public enum OutputLoad
 {
 	HighImpedance,
-	Ohms50
+	Ohms50,
+	Custom
 }
 
 public enum OutputPolarity
@@ -50,5 +51,6 @@ public sealed record ChannelSnapshot
 	public double NoiseMean { get; init; }
 	public bool OutputEnabled { get; init; }
 	public required OutputLoad Load { get; init; }
+	public double? LoadOhms { get; init; }
 	public required OutputPolarity Polarity { get; init; }
 }

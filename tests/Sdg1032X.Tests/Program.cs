@@ -1,4 +1,7 @@
+using System.Buffers.Binary;
 using System.Globalization;
+using System.Net;
+using System.Net.Sockets;
 using System.Text;
 using Sdg1032X.App;
 using Sdg1032X.App.Controls;
@@ -138,6 +141,29 @@ Test("Polecenie wyjścia ma priorytet przed ustawieniami",()=>
 	Equal("C1:BSWV AMP,2",queue.TakeNext().Command);
 });
 
+Test("Włączenie wyjścia czeka na wcześniejsze nastawy",()=>
+{
+	InstrumentRequestQueue queue=new();
+	queue.EnqueueLatest("C1:AMP","C1:BSWV AMP,2");
+	queue.EnqueueOrdered("C1:OUTP ON");
+	Equal("C1:BSWV AMP,2",queue.TakeNext().Command);
+	Equal("C1:OUTP ON",queue.TakeNext().Command);
+});
+
+Test("Anulowanie kolejki kończy wszystkie oczekujące zadania",()=>
+{
+	InstrumentRequestQueue queue=new();
+	InstrumentRequest setting=queue.EnqueueLatest("C1:AMP","C1:BSWV AMP,2");
+	InstrumentRequest output=queue.EnqueueOrdered("C1:OUTP ON");
+	InstrumentRequest off=queue.EnqueuePriority("C2:OUTP OFF");
+	queue.CancelAll();
+	Equal(0,queue.PendingCount);
+	if(!setting.Completion.IsCanceled || !output.Completion.IsCanceled || !off.Completion.IsCanceled)
+	{
+		throw new Exception("Nie wszystkie zadania zostały anulowane");
+	}
+});
+
 Test("Zastąpione polecenie kończy oczekiwanie jako anulowane",()=>
 {
 	InstrumentRequestQueue queue=new();
@@ -162,6 +188,26 @@ Test("Kodowanie XDR zachowuje liczby i dopełnione bajty",()=>
 	}
 });
 
+Test("VXI-11 wykonuje pełny lokalny przepływ RPC",()=>
+{
+	using FakeVxi11Server server=new("SIGLENT,SDG1032X,FAKE,1.0");
+	using(Vxi11Transport transport=new("127.0.0.1",server.MapperPort))
+	{
+		string response=Encoding.ASCII.GetString(transport.Query("*IDN?")).Trim();
+		Equal("SIGLENT,SDG1032X,FAKE,1.0",response);
+	}
+	server.Wait();
+	Equal("*IDN?\n",Encoding.ASCII.GetString(server.WrittenBytes));
+	if(server.WriteCalls < 2)
+	{
+		throw new Exception("Zapis nie został podzielony według maxRecvSize");
+	}
+	if(!server.Destroyed)
+	{
+		throw new Exception("Łącze VXI-11 nie zostało zamknięte");
+	}
+});
+
 Test("Klient akceptuje tylko generator SDG1032X",()=>
 {
 	using ScriptedTransport transport=new("SIGLENT,SDG1032X,123456,1.0");
@@ -170,6 +216,25 @@ Test("Klient akceptuje tylko generator SDG1032X",()=>
 	using ScriptedTransport other=new("SIGLENT,SDG2042X,123456,1.0");
 	using SiglentGeneratorClient rejected=new(other);
 	Reject(()=>rejected.Initialize());
+});
+
+Test("Niestandardowe obciążenie nie jest przedstawiane jako 50 omów",()=>
+{
+	ChannelSnapshot value=SiglentProtocol.ParseSnapshot(
+		1,
+		"C1:BSWV WVTP,SINE,FRQ,1KHZ,AMP,1V,OFST,0V,PHSE,0",
+		"C1:OUTP OFF,LOAD,75,PLRT,NOR");
+	Equal(OutputLoad.Custom,value.Load);
+	Close(75,value.LoadOhms ?? double.NaN);
+	try
+	{
+		SiglentProtocol.LoadCommand(1,OutputLoad.Custom);
+	}
+	catch(ArgumentOutOfRangeException)
+	{
+		return;
+	}
+	throw new Exception("Próba zapisu niestandardowego obciążenia nie została odrzucona");
 });
 
 Test("Metadane aplikacji zachowują autora, wersję i licencję",()=>
@@ -211,5 +276,194 @@ sealed class ScriptedTransport(string identity) : IInstrumentTransport
 
 	public void Dispose()
 	{
+	}
+}
+
+sealed class FakeVxi11Server : IDisposable
+{
+	private const uint Program=395183;
+	private readonly byte[] response;
+	private readonly TcpListener mapper=new(IPAddress.Loopback,0);
+	private readonly TcpListener core=new(IPAddress.Loopback,0);
+	private readonly MemoryStream written=new();
+	private readonly Task mapperTask;
+	private readonly Task coreTask;
+
+	public FakeVxi11Server(string identity)
+	{
+		response=Encoding.ASCII.GetBytes(identity+"\n");
+		core.Start();
+		mapper.Start();
+		MapperPort=((IPEndPoint)mapper.LocalEndpoint).Port;
+		mapperTask=Task.Run(ServeMapper);
+		coreTask=Task.Run(ServeCore);
+	}
+
+	public int MapperPort { get; }
+	public int WriteCalls { get; private set; }
+	public bool Destroyed { get; private set; }
+	public byte[] WrittenBytes => written.ToArray();
+
+	public void Wait()
+	{
+		if(!Task.WaitAll([mapperTask,coreTask],TimeSpan.FromSeconds(5)))
+		{
+			throw new TimeoutException("Lokalny serwer VXI-11 nie zakończył pracy");
+		}
+	}
+
+	public void Dispose()
+	{
+		mapper.Stop();
+		core.Stop();
+		try
+		{
+			Task.WaitAll([mapperTask,coreTask],TimeSpan.FromSeconds(1));
+		}
+		catch(AggregateException)
+		{
+		}
+		written.Dispose();
+	}
+
+	private void ServeMapper()
+	{
+		using TcpClient client=mapper.AcceptTcpClient();
+		NetworkStream network=client.GetStream();
+		(uint id,uint procedure,Xdr call)=ReadCall(network);
+		if(procedure != 3)
+		{
+			throw new InvalidDataException("Nieoczekiwana procedura portmapper");
+		}
+		call.Get();
+		call.Get();
+		call.Get();
+		call.Get();
+		SendReply(network,id,xdr=>xdr.Put((uint)((IPEndPoint)core.LocalEndpoint).Port),false);
+	}
+
+	private void ServeCore()
+	{
+		using TcpClient client=core.AcceptTcpClient();
+		NetworkStream network=client.GetStream();
+		while(true)
+		{
+			(uint id,uint procedure,Xdr call)=ReadCall(network);
+			switch(procedure)
+			{
+				case 10:
+					call.Get();
+					call.Get();
+					call.Get();
+					call.GetBytes();
+					SendReply(network,id,xdr=>
+					{
+						xdr.Put(0);
+						xdr.Put(123);
+						xdr.Put(0);
+						xdr.Put(4);
+					},false);
+					break;
+				case 11:
+					call.Get();
+					call.Get();
+					call.Get();
+					call.Get();
+					byte[] part=call.GetBytes();
+					written.Write(part);
+					WriteCalls++;
+					SendReply(network,id,xdr=>
+					{
+						xdr.Put(0);
+						xdr.Put((uint)part.Length);
+					},false);
+					break;
+				case 12:
+					for(int index=0;index<6;index++)
+					{
+						call.Get();
+					}
+					SendReply(network,id,xdr=>
+					{
+						xdr.Put(0);
+						xdr.Put(4);
+						xdr.PutBytes(response);
+					},true);
+					break;
+				case 23:
+					call.Get();
+					Destroyed=true;
+					SendReply(network,id,xdr=>xdr.Put(0),false);
+					return;
+				default:
+					throw new InvalidDataException("Nieoczekiwana procedura VXI-11: "+procedure);
+			}
+		}
+	}
+
+	private static (uint Id,uint Procedure,Xdr Arguments) ReadCall(NetworkStream network)
+	{
+		Xdr call=new(ReadRecord(network));
+		uint id=call.Get();
+		if(call.Get() != 0 || call.Get() != 2)
+		{
+			throw new InvalidDataException("Nieprawidłowe wywołanie RPC");
+		}
+		call.Get();
+		call.Get();
+		uint procedure=call.Get();
+		call.Get();
+		call.GetBytes();
+		call.Get();
+		call.GetBytes();
+		return (id,procedure,call);
+	}
+
+	private static byte[] ReadRecord(NetworkStream network)
+	{
+		using MemoryStream result=new();
+		byte[] markerBytes=new byte[4];
+		while(true)
+		{
+			network.ReadExactly(markerBytes);
+			uint marker=BinaryPrimitives.ReadUInt32BigEndian(markerBytes);
+			byte[] part=new byte[marker&0x7fffffffu];
+			network.ReadExactly(part);
+			result.Write(part);
+			if((marker&0x80000000u) != 0)
+			{
+				return result.ToArray();
+			}
+		}
+	}
+
+	private static void SendReply(NetworkStream network,uint id,Action<Xdr> body,bool split)
+	{
+		Xdr reply=new();
+		reply.Put(id);
+		reply.Put(1);
+		reply.Put(0);
+		reply.Put(0);
+		reply.PutBytes([]);
+		reply.Put(0);
+		body(reply);
+		byte[] bytes=reply.Bytes();
+		if(!split)
+		{
+			SendFragment(network,bytes,true);
+			return;
+		}
+		int middle=bytes.Length/2;
+		SendFragment(network,bytes[..middle],false);
+		SendFragment(network,bytes[middle..],true);
+	}
+
+	private static void SendFragment(NetworkStream network,byte[] bytes,bool last)
+	{
+		byte[] marker=new byte[4];
+		uint value=(uint)bytes.Length|(last ? 0x80000000u : 0);
+		BinaryPrimitives.WriteUInt32BigEndian(marker,value);
+		network.Write(marker);
+		network.Write(bytes);
 	}
 }

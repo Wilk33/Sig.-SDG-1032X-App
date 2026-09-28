@@ -55,6 +55,12 @@ public sealed class GeneratorSession : IAsyncDisposable
 		return requests.EnqueuePriority(command).Completion;
 	}
 
+	public Task WriteOrderedAsync(string command)
+	{
+		ObjectDisposedException.ThrowIf(disposed,this);
+		return requests.EnqueueOrdered(command).Completion;
+	}
+
 	public async Task<ChannelSnapshot> ReadChannelAsync(int channel)
 	{
 		ObjectDisposedException.ThrowIf(disposed,this);
@@ -76,6 +82,7 @@ public sealed class GeneratorSession : IAsyncDisposable
 			return;
 		}
 		disposed=true;
+		requests.CancelAll();
 		cancellation.Cancel();
 		try
 		{
