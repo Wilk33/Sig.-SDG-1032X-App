@@ -199,9 +199,32 @@ public partial class ChannelControl : UserControl
 		OutputLoad load=LoadSelector.SelectedIndex == 0
 			? OutputLoad.HighImpedance
 			: OutputLoad.Ohms50;
-		await ObserveLatestAsync(
-			session.SetLatestAsync($"C{channel}:LOAD",SiglentProtocol.LoadCommand(channel,load)),
-			$"CH{channel}: zmieniono obciążenie.");
+		try
+		{
+			await session.SetLatestAsync(
+				$"C{channel}:LOAD",
+				SiglentProtocol.LoadCommand(channel,load));
+			updating=true;
+			try
+			{
+				while(LoadSelector.Items.Count > 2)
+				{
+					LoadSelector.Items.RemoveAt(2);
+				}
+			}
+			finally
+			{
+				updating=false;
+			}
+			showStatus($"CH{channel}: zmieniono obciążenie.",false);
+		}
+		catch(TaskCanceledException)
+		{
+		}
+		catch(Exception exception)
+		{
+			showStatus(exception.Message,true);
+		}
 	}
 
 	private async void PolaritySelectionChanged(object sender,SelectionChangedEventArgs eventArgs)
