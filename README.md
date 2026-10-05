@@ -1,5 +1,10 @@
 # SIGLENT SDG1032X Controller
 
+> [!IMPORTANT]
+> **To repozytorium zawiera historyczną linię rozwoju zakończoną na wersji 0.1.2.**
+>
+> Aktywny rozwój aplikacji SIGLENT SDG1000X Control jest kontynuowany w repozytorium [Wilk33/LabStation](https://github.com/Wilk33/LabStation), w katalogu [SDG1000X Control](https://github.com/Wilk33/LabStation/tree/main/SDG1000X%20Control). Bieżąca wersja w LabStation to 0.2.11. Nowe poprawki, wydania i wspólny panel dla wszystkich przyrządów są publikowane wyłącznie tam.
+
 Wąska aplikacja Windows do podstawowego sterowania dwukanałowym generatorem SIGLENT SDG1032X przez LAN/VXI-11.
 
 ## Najważniejsze założenia
@@ -76,6 +81,8 @@ Testy automatyczne i tryb demonstracyjny nie zmieniają stanu fizycznego urządz
 - Mateusz Skipor
 - Inżynier technik elektroniki
 - mskiporsklep@op.pl
+
+Projekt był tworzony przez Codex GPT-5.6-Sol pod kierunkiem Mateusza Skipora, na podstawie jego wymagań, decyzji projektowych i testów urządzenia.
 
 Projekt jest udostępniany na warunkach [PolyForm Noncommercial License 1.0.0](LICENSE).
 
